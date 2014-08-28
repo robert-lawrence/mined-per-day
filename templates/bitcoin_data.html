@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Cryptocurrency Daily Yield</title>
+	<link rel="stylesheet" type="text/css" href="/style.css">
+</head>
+<body>
+<!--
+<div class="content">
+<ul>
+{# no longer in use
+{% for i in data %}
+<li>{{i[0]}} - ${{i[1]}} USD is mined per day</li>
+{% endfor %}
+#}
+</ul>
+</div>
+-->
+<p class="header"><b> Daily USD mined by all Cryptocurrencies - {{ time }} </b>
+</p>
+<div class="data">
+<table class="table" id="currencies">
+	<thead><th>Rank</th><th class="name">Name</th><th>USD Mined per Day (Approximate)</th><th class="percent">% of total USD mined per Day</th></thead>
+	<tfoot>
+		<tr>
+			<td></td><td>Total</td><td>{{totalUSD}}</td><td>100%</td>
+		</tr>
+	</tfoot>
+	<tbody>
+	{% for i in data %}
+	<tr><td class="number">{{data.index(i) + 1}}</td><td>{% if coin_urls[i[2]] %}<a class="coin" href={{coin_urls[i[2]]}}>{% endif %} {{ i[0] }} {% if coin_urls[i[2]] %}</a>{% endif %}({{i[2]}}){% if i[2] in scams %}*{% endif %}</td><td class="value">{{i[1]}}</td><td class="percent">{{ i[3] }}%</td></tr>
+	{% endfor %}
+	</tbody>
+</table>
+</div>
+<div id="footer">
+
+<p>
+	<b>*</b> The rank shown will likely decrease quickly, as these cryptocurrencies were designed to release most of their coins very quickly, increasing demand and inflating the price while grossly rewarding early adapters (including the developers). As a result the amount of USD mined per day will start out high, then likely decrease drastically over time as the number of coins mined per day falls.
+</p>
+
+<div>BTC: 19dtoC5AjCSuxi5oXKFCbkHBecJNUQoNaQ <br> All figures are estimates using current exchange rates and target block generation times. In reality blocks generate slightly faster, making these figures slightly inaccurate. <br> JSON available at <a href="http://www.minedperday.appspot.com/json"></div>
+Powered by <a href="http://www.coindesk.com/price/">Coindesk</a>, <a href="http://www.cryptsy.com">Cryptsy</a>, <a href="http://www.coinwarz.com/cryptocurrency">Coinwarz</a> and <a href="http://www.coinplorer.com">Coinplorer</a>
+</div>
+</body>

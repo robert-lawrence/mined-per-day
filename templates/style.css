@@ -1,0 +1,176 @@
+body {
+    position: relative;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 14px;
+
+    width: 1000px;
+    margin: 0 auto;
+    padding: 10px;
+    color: #333;
+}
+
+.login-area {
+    font-size: 13px;
+    color: gray;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.login-link {
+    color: gray;
+    text-decoration: none;
+}
+
+.login-link:visited {
+    color: gray;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.error {
+    color: red;
+}
+.navbar {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
+label {
+  display: block;
+  font-size: 20px;
+}
+
+label + label {
+    margin-top: 20px;
+}
+
+input[type=text] {
+    width: 500px;
+    font-size: 20px;
+    padding: 2px;
+    font-family: monospace;
+}
+
+textarea {
+  width: 500px;
+  height: 400px;
+  font-size: 17px;
+  font-family: monospace;
+}
+
+input[type=submit] {
+  font-size: 24px;
+}
+
+p{
+    text-align: center;
+}
+.header{
+    text-align: center;
+    font-size: 25px;
+}
+#footer{
+    text-align: left;
+    margin-top: 100px;
+
+}
+.main-title {
+    display: block;
+    color: #222;
+    font-size: 40px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+    text-decoration: none;
+}
+a.post:link {color:#222; text-decoration:none;}      /* unvisited link */
+a.post:visited {color:#222; text-decoration:none;}  /* visited link */
+a.post:hover {color:#222; text-decoration:none;}  /* mouse over link */
+a.post:active {color:#222; text-decoration:none;}  /* selected link */
+
+.post + .post {
+    margin-top: 15px;
+}
+
+.post-heading {
+    position: relative;
+    border-bottom: 3px solid #666;
+}
+
+.post-title {
+    font-size: 24px;
+    font-weight: bold;
+
+    text-decoration: none;
+    color: #333;
+}
+
+.post-title:visisted {
+    color: #333;
+}
+
+.post-date {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    color: #999;
+
+}
+
+.post-content {
+    margin-top: 5px;
+}
+
+.age {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    color: gray;
+    font-size: 12px;
+}
+
+/** 
+Cryptocurrency Stuff
+**/
+table {
+    border-collapse: collapse;
+    margin-left: auto;
+    margin-right: auto;
+}
+tr {
+    border-bottom: 1px solid gray;
+}
+td {
+    padding: 15px;
+}
+th {
+    padding-bottom: 10px;
+}
+.name {
+    text-align: left;
+    padding-left: 15px;
+}
+.number {
+    text-align: center;
+}
+.data {
+    margin-left: auto;
+    margin-right: auto;
+}
+.percent {
+    padding-left: 30px;
+}
+a.coin:link {color: blue; text-decoration:none;}      /* unvisited link */
+a.coin:visited {color: blue; text-decoration:none;}  /* visited link */
+a.coin:hover {color:#222; text-decoration:underline;}  /* mouse over link */
+a.coin:active {color:#222; text-decoration:underline;}  /* selected link */
