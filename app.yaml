@@ -9,12 +9,14 @@ handlers:
   static_files: favicon.ico
   upload: favicon\.ico
 
-- url: /style\.css
-  static_files: templates/style.css
-  upload: templates/style\.css
+- url: /css
+  static_dir: css
+
+- url: /bootstrap-dist
+  static_dir: bootstrap-dist
 
 - url: .*
-  script: bitcoin_data.app
+  script: coin_data.app
 
 libraries:
 - name: webapp2

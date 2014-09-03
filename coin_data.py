@@ -18,16 +18,11 @@
 import os
 import time
 import webapp2
-import cgi
-import urllib2
 import re
 import jinja2
 from string import letters
 import string
-import hashlib
-import hmac
 import json
-import random
 from google.appengine.ext import db
 from google.appengine.api import memcache
 from xml.dom import minidom
@@ -41,14 +36,13 @@ from requests.exceptions import ConnectionError
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
-SECRET = "correcthorsebatterystaple0110100110010110"
 BLOCKS_PER_DAY = {"LTC":576, "BTC":144, "AUR":288, "DOGE":1440, "PPC":144, "NMC":144, "FTC":1440}
 COIN_URLS = {"BTC":"http://www.bitcoin.org/","LTC":"http://litecoin.org/", "DOGE":"http://dogecoin.com/",
 "VTC":"http://vertcoin.org/", "PPC":"http://www.peercoin.net/", "NMC":"http://namecoin.info/",
 "MAX":"http://www.maxcoin.co.uk/", "FTC":"http://feathercoin.com/", "XPM":"http://primecoin.io/",
-"DRK":"http://www.darkcoin.io/", "WDC":"http://www.worldcoinfoundation.org/", "NVC":"http://novacoin.org/", 
+"DRK":"http://www.darkcoin.io/", "WDC":"http://www.worldcoinfoundation.org/", "NVC":"http://novacoin.org/",
 "POT":"http://potcoin.info/", "ANC":"https://anoncoin.net/", "DGB":"http://www.digibyte.co/",
-"RDD":"http://www.reddcoin.com/", "HBN":"http://hobonickels.info/", "CRYPT":"http://cryptco.org/", 
+"RDD":"http://www.reddcoin.com/", "HBN":"http://hobonickels.info/", "CRYPT":"http://cryptco.org/",
 "RZR":"https://bitcointalk.org/index.php?topic=644498.0", "NAUT":"http://www.nautiluscoin.com/"}
 SCAMS = ["CRYPT", "CGB", "IFC", "IXC", "RZR"]
 NOT_MINED = ['VOOT']
@@ -84,6 +78,11 @@ def get_url(url):
 	return r
 
 def marketdata(update=False):
+	#finds the current exchange rate of all coins traded on Cryptsy.
+	#coins are traded relative to BTC, LTC, and USD, depending on the coin.
+	#Because the BTC/USD exchange rate differs on each exchange, coindesk.com
+	#is used to provide an averaged value. Later all exchage rates will
+	#be converted into /USD.
 	url = "http://pubapi.cryptsy.com/api.php?method=marketdatav2"
 	data = memcache.get("marketdata")
 	if data == None or update:
@@ -109,6 +108,9 @@ def marketdata(update=False):
 		return data
 
 def coins_per_block(update=False):
+	#finds the number of coins awarded per block, block time in seconds,
+	#coin name and exchange rate for each coin. results return in dictionary of
+	#arrays, sorted by cointag (eg "BTC")
 	url = "http://www.coinwarz.com/v1/api/profitability/?apikey=25ea0abd0d334c059fff797b5ea80272&algo=all"
 	data = memcache.get("coindata")
 	if data == None or update:
@@ -141,6 +143,9 @@ def coins_per_block(update=False):
 		return data
 
 def other_amounts():
+	#for coins that don't have a simple/static
+	#number of coins awarded per block
+	#this function finds the current reward per block for each coin
 	amounts = {}
 	r = get_url("https://coinplorer.com/XPM")
 	if r:
@@ -173,7 +178,7 @@ def get_and_verify_sources():
 			return False
 	return data, coins_block
 
-class GetPubAPI(Handler):
+class CoinRanker(Handler):
 	def get(self):
 		source = get_and_verify_sources()
 		if source:
@@ -238,12 +243,6 @@ def USD_price_calc(marketdata):
 #		USD_prices[i] = format(USD_prices[i], 'f', precision=8).rstrip('0')
 	return USD_prices
 
-def daily_yield(USD_prices):
-	USD_amounts = {}
-	for item in DAILY_AMOUNTS:
-		USD_amounts[item] = USD_prices[item + '/USD'] * DAILY_AMOUNTS[item]
-	return USD_amounts
-
 class GetJSON(Handler):
 	def get(self):
 		self.response.headers['Content-Type'] = 'application/json'
@@ -254,7 +253,7 @@ class GetJSON(Handler):
 			coin_data = {} #USD per day
 			for i in coins_block[0]:
 				if USD_data.get(i + "/USD"):
-					coin_data[i] = coins_block[0][i][0] * (86400 / coins_block[0][i][1]) * USD_data[i + "/USD"]	
+					coin_data[i] = coins_block[0][i][0] * (86400 / coins_block[0][i][1]) * USD_data[i + "/USD"]
 
 			total = 0.0
 			for item in coin_data:
@@ -274,7 +273,6 @@ class GetJSON(Handler):
 			self.write(finalJSON)
 
 app = webapp2.WSGIApplication([
-    (r'/', GetPubAPI),
+    (r'/', CoinRanker),
     (r'/json', GetJSON)
 ], debug=True)
-
