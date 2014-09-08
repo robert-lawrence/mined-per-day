@@ -39,10 +39,10 @@ COIN_URLS = {"BTC":"http://www.bitcoin.org/","LTC":"http://litecoin.org/", "DOGE
 "DRK":"http://www.darkcoin.io/", "WDC":"http://www.worldcoinfoundation.org/", "NVC":"http://novacoin.org/",
 "POT":"http://potcoin.info/", "ANC":"https://anoncoin.net/", "DGB":"http://www.digibyte.co/",
 "RDD":"http://www.reddcoin.com/", "HBN":"http://hobonickels.info/", "CRYPT":"http://cryptco.org/",
-"NAUT":"http://www.nautiluscoin.com/",
-"VIA":"http://viacoin.org/"}
+"NAUT":"http://www.nautiluscoin.com/", "VIA":"http://viacoin.org/", "MEC":"http://www.megacoin.co.nz/",
+"TRC":"http://terracoin.sourceforge.net/"}
 SCAMS = ["CRYPT", "CGB", "IFC", "IXC", "RZR"]
-NOT_MINED = ['VOOT']
+NOT_MINED = ['ZEIT', 'CGB', "IFC", 'VOOT', "TES"]
 
 class Handler(webapp2.RequestHandler):
 	def write(self, *a, **kw):
@@ -119,7 +119,7 @@ def coins_per_block(update=False):
 			newData = {}
 			i = 0
 			while i < len(data['Data']):
-				if data['Data'][i]["CoinTag"] not in ['ZEIT', 'CGB', "IFC", 'VOOT']:
+				if data['Data'][i]["CoinTag"] not in NOT_MINED:
 					newData[data['Data'][i]["CoinTag"]] = [data['Data'][i]['BlockReward'], data['Data'][i]['BlockTimeInSeconds'], data['Data'][i]['CoinName'] ,data['Data'][i]['ExchangeRate']]
 				i += 1
 			amounts = other_amounts()
