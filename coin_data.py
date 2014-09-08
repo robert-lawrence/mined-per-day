@@ -1,19 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 #
-# Copyright 2007 Google Inc.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+#Current setup requires coindata to be fetched from websites only once
+#a request has been made. marketprices have to be fetched again every few
+#minutes, which means that certain users will experience a lot of lag while
+#the data is retrieved from websites. Ideally this process would be handled by
+#a dedicated backend server and stored in memcache, however for the purposes of
+#this project that was considered too expensive under Google's pricing options.
+#Perhaps moving to Amazon AWS might be a better solution, especially if the app
+#will be scaled to include more data points.
 #
 import os
 import time
@@ -43,7 +39,8 @@ COIN_URLS = {"BTC":"http://www.bitcoin.org/","LTC":"http://litecoin.org/", "DOGE
 "DRK":"http://www.darkcoin.io/", "WDC":"http://www.worldcoinfoundation.org/", "NVC":"http://novacoin.org/",
 "POT":"http://potcoin.info/", "ANC":"https://anoncoin.net/", "DGB":"http://www.digibyte.co/",
 "RDD":"http://www.reddcoin.com/", "HBN":"http://hobonickels.info/", "CRYPT":"http://cryptco.org/",
-"RZR":"https://bitcointalk.org/index.php?topic=644498.0", "NAUT":"http://www.nautiluscoin.com/"}
+"NAUT":"http://www.nautiluscoin.com/",
+"VIA":"http://viacoin.org/"}
 SCAMS = ["CRYPT", "CGB", "IFC", "IXC", "RZR"]
 NOT_MINED = ['VOOT']
 
@@ -66,8 +63,9 @@ class Handler(webapp2.RequestHandler):
 			return False
 
 def get_url(url):
+	#uses requests to fetch urls, catches exceptions
 	try:
-		r = requests.get(url, timeout=5)
+		r = requests.get(url, timeout=20)
 	except (ConnectionError, 'Timeout') as e:
 		r = False  #'ConnectionFailed'
 		return r
@@ -166,6 +164,7 @@ def other_amounts():
 	return amounts
 
 def get_and_verify_sources():
+	#gets all of the data needed for the rankings from the respective websites
 	data = marketdata()
 	coins_block = coins_per_block()
 	if data == False:
@@ -179,6 +178,7 @@ def get_and_verify_sources():
 	return data, coins_block
 
 class CoinRanker(Handler):
+	#main fn, called when user requests page.
 	def get(self):
 		source = get_and_verify_sources()
 		if source:

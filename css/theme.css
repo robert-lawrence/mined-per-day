@@ -1,6 +1,8 @@
 body {
   padding-top: 70px;
   padding-bottom: 30px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .theme-dropdown .dropdown-menu {
@@ -15,4 +17,7 @@ body {
 
 .theme-showcase .navbar .container {
   width: auto;
+}
+.page-header {
+  text-align : center
 }
