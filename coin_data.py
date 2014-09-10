@@ -150,17 +150,17 @@ def other_amounts():
 		text = r.text
 		reg = re.compile("(?s)Block reward:</td>.+<td>(\d+\.\d+)</td>")
 		match = re.search(reg, text)
-#		if match:
-		reward = match.group(1)
-		amounts["XPM"] = [float(reward), 60, 'Primecoin']
+		if match:
+		    reward = match.group(1)
+		    amounts["XPM"] = [float(reward), 60, 'Primecoin']
 	f = get_url("https://coinplorer.com/FLO")
 	if f:
 		text = f.text
 		reg = re.compile("(?s)Block reward:</td>.+<td>(\d+\.\d+)</td>")
 		match = re.search(reg, text)
-#		if match:
-		reward = match.group(1)
-		amounts["FLO"] = [float(reward), 40, 'Florincoin']
+		    if match:
+		    reward = match.group(1)
+		    amounts["FLO"] = [float(reward), 40, 'Florincoin']
 	return amounts
 
 def get_and_verify_sources():
