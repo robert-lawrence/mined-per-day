@@ -2,10 +2,8 @@
 # coding: utf-8
 #
 #
-#Current setup requires coindata to be fetched from websites only once
-#a request has been made. marketprices have to be fetched again every few
-#minutes, which means that certain users will experience a lot of lag while
-#the data is retrieved from websites. Ideally this process would be handled by
+#Under current setup the marketdata is refreshed by the server every 10 minutes.
+#Ideally this process would be handled by
 #a dedicated backend server and stored in memcache, however for the purposes of
 #this project that was considered too expensive under Google's pricing options.
 #Perhaps moving to Amazon AWS might be a better solution, especially if the app
@@ -17,15 +15,13 @@ import webapp2
 import re
 import jinja2
 import json
-#from google.appengine.ext import db
 from google.appengine.api import memcache
+from google.appengine.api import urlfetch
 from xml.dom import minidom
-#import pickle
 import operator
 import sys
 sys.path.insert(0, 'requests')
-import requests
-from requests.exceptions import ConnectionError
+
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape = True)
@@ -53,16 +49,13 @@ class Handler(webapp2.RequestHandler):
         self.write(self.render_str(template, **kw))
 
 def get_url(url):
-    #uses requests to fetch urls, catches exceptions
     try:
-        r = requests.get(url, timeout=20)
-    except (ConnectionError, 'Timeout') as e:
-        r = False  #'ConnectionFailed'
-        return r
-    try:
-        r.raise_for_status()
-    except requests.exceptions.HTTPError:
+        r = urlfetch.fetch(url, deadline=15, method="GET")
+    except (urlfetch.Error) as e:
         r = False
+    if r:
+        if r.status_code != 200:
+            r = False
     return r
 
 def marketdata(update=False):
@@ -76,17 +69,18 @@ def marketdata(update=False):
     if data == None or update:
         data = get_url(url)
         if data:
-            data = data.json()
+            data = json.loads(data.content)
             cacheTime = int(time.time())
             newData = {}
             for i in data['return']['markets']:
                 if data['return']['markets'][i]['lasttradeprice']:
                     newData[i] = data['return']['markets'][i]['lasttradeprice']
-            BTC_USD = get_url('http://api.coindesk.com/v1/bpi/currentprice/USD.json')
-            BTC_USD = BTC_USD.json()
-            BTC_USD = float(BTC_USD['bpi']['USD']['rate'])
-            newData['BTC/USD'] = BTC_USD
+            #BTC_USD = get_url('http://api.coindesk.com/v1/bpi/currentprice/USD.json')
+            #BTC_USD = BTC_USD.json()
+            #BTC_USD = float(BTC_USD['bpi']['USD']['rate'])
+            #newData['BTC/USD'] = BTC_USD
             memcache.set("marketdata", [newData, cacheTime])
+            del data
             return newData, cacheTime
         else:
             return False
@@ -104,7 +98,7 @@ def coins_per_block(update=False):
     if data == None or update:
         data = get_url(url)
         if data:
-            data = data.json()
+            data = json.loads(data.content)
             cacheTime = int(time.time())
             newData = {}
             i = 0
@@ -119,6 +113,7 @@ def coins_per_block(update=False):
             memcache.set("coindata", [newData, cacheTime])
             if memcache.get("CPB_last_attempt"):
                 memcache.delete("CPB_last_attempt")
+            del data
             return newData, cacheTime
         else:
             return False
@@ -137,20 +132,22 @@ def other_amounts():
     amounts = {}
     r = get_url("https://coinplorer.com/XPM")
     if r:
-        text = r.text
+        text = r.content
         reg = re.compile("(?s)Block reward:</td>.+<td>(\d+\.\d+)</td>")
         match = re.search(reg, text)
         if match:
             reward = match.group(1)
             amounts["XPM"] = [float(reward), 60, 'Primecoin']
+    del r
     f = get_url("https://coinplorer.com/FLO")
     if f:
-        text = f.text
+        text = f.content
         reg = re.compile("(?s)Block reward:</td>.+<td>(\d+\.\d+)</td>")
         match = re.search(reg, text)
         if match:
             reward = match.group(1)
             amounts["FLO"] = [float(reward), 40, 'Florincoin']
+    del f
     return amounts
 
 def get_and_verify_sources():
@@ -202,7 +199,7 @@ def coinRanker():
 
         return coin_data, totalUSD, coins_block
     else:
-        return False, False
+        return False, False, False
 
 def sort_and_format(coin_data, coins_block, total):
     coin_data = sorted(coin_data.iteritems(), key=operator.itemgetter(1), reverse=True)
@@ -214,7 +211,7 @@ def sort_and_format(coin_data, coins_block, total):
 
 
 def USD_price_calc(marketdata):
-    BTC_USD = marketdata[0]['BTC/USD']
+    BTC_USD = float(marketdata[0]['BTC/USD'])
     LTC_USD = float(marketdata[0]['LTC/BTC']) * BTC_USD
     marketdata = marketdata[0]
     USD_prices = {}
@@ -239,7 +236,7 @@ class GetCoinRankings(Handler):
             coin_data = sort_and_format(coin_data, coins_block, totalUSD)
             totalUSD = "${:,.2f}".format(totalUSD)
             self.render('bitcoin_data.html', data=coin_data, coin_urls=COIN_URLS, scams=SCAMS, time=time.strftime("%b %d %Y", time.gmtime()), totalUSD=totalUSD)
-            coin_data, totalUSD, coins_block = 0, 0, 0
+            del coin_data, totalUSD, coins_block
         else:
             self.write("Error: Price Data Unavialable")
 class GetJSON(Handler):
@@ -256,11 +253,23 @@ class GetJSON(Handler):
                 l += 1
             finalJSON = {"success":1, "return":{"coin_data":coin_data, "total_USD_per_day":totalUSD}}
             self.write(finalJSON)
+            del coin_data, totalUSD, coins_block
         else:
             finalJSON = {"success":0}
             self.write(finalJSON)
 
+class UpdateData(Handler):
+    # for updating only
+    def get(self):
+        key = self.request.get("key")
+        if key == "key-withheld":
+            placeholder = marketdata(True)
+            self.write("good.")
+        else:
+            self.write("nope.")
+
 app = webapp2.WSGIApplication([
     (r'/', GetCoinRankings),
-    (r'/json', GetJSON)
+    (r'/json', GetJSON),
+    (r'/updatedata(?:[a-zA-Z0-9_-]+/?)*', UpdateData)
 ], debug=True)
